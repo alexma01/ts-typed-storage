@@ -40,3 +40,6 @@ jobs:
 
       - name: Run Jest tests
         run: yarn test
+      
+      - name: Build project
+        run: yarn build

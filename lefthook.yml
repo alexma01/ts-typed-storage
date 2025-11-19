@@ -5,6 +5,9 @@ pre-commit:
     lint-check:
       priority: 1
       run: yarn lint
-    test-app:
+    test:
       priority: 2
       run: yarn test
+    build:
+      priority: 3
+      run: yarn build

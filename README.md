@@ -5,9 +5,8 @@ Type-safe key–value storage on top of any **synchronous** storage engine
 
 - ✅ Strongly typed keys (editor autocomplete)
 - ✅ Strongly typed values per key
-- ✅ Pluggable `Codec<T>` per field (string / number / boolean / JSON / custom)
-- ✅ Works with any sync storage backend via a small adapter
-- ✅ Zero runtime dependencies
+- ✅ Simple API for defining schemas and using storage
+- ✅ Works with any sync storage backend via a tiny adapter
 
 ---
 
@@ -24,44 +23,15 @@ yarn add @alexma01/typed-storage
 pnpm add @alexma01/typed-storage
 ```
 
-Requires TypeScript 5+.
-
----
-
-## Core ideas
-
-The library is built around a few core building blocks:
-
-- **`Codec<T>`** – how a value of type `T` is encoded/decoded to/from `string` for storage.
-- **`field<T>(...)`** – creates a `StorageField<T>` from a codec (and optional default).
-- **`defineStorageSchema(...)`** – defines a schema with literal keys and strong typing.
-- **`SyncStorageAdapter`** – a tiny interface that abstracts the underlying storage engine.
-- **`createSyncTypedStorage`** – given a schema + adapter, returns a strongly typed storage client.
-
-From that, you get a type-safe API like:
-
-```ts
-const storage = createSyncTypedStorage({
-  adapter,
-  schema,
-  namespace: "app",
-});
-
-storage.set("userToken", "abc123");      // ok
-storage.set("isAuthenticated", true);   // ok
-// storage.set("isAuthenticated", "yes"); // ❌ TypeScript error
-
-const token = storage.get("userToken");        // string
-const auth  = storage.get("isAuthenticated");  // boolean
-```
+Requires **TypeScript 5+**.
 
 ---
 
 ## Quick start
 
-### 1. Define your schema (with `defineStorageSchema` + `field`)
+### 1. Define your schema
 
-You describe the logical shape of your data using the built-in codecs and the helpers `field` and `defineStorageSchema`.
+Use `defineStorageSchema` and `field` with the provided codecs:
 
 ```ts
 import {
@@ -83,20 +53,14 @@ export const appStorageSchema = defineStorageSchema({
 export type AppStorageSchema = typeof appStorageSchema;
 ```
 
-This gives you:
-
-- literal keys (`"userToken" | "count" | "userData" | "isAuthenticated"`)
-- inferred value types for each key (string, number, object, boolean…)
-- full type safety when calling `get`, `set`, `keys`, etc.
-
-You **don’t** need to write `as const` or `satisfies StorageSchema` yourself:  
-`defineStorageSchema` takes care of that.
+- Keys are strongly typed (`"userToken" | "count" | "userData" | "isAuthenticated"`).
+- Values are correctly inferred (string, number, object, boolean).
 
 ---
 
-### 2. Implement a `SyncStorageAdapter` (example: `localStorage`)
+### 2. Implement a storage adapter (example: `localStorage`)
 
-You only need to implement four methods.
+You just need to match the `SyncStorageAdapter` shape:
 
 ```ts
 import type { SyncStorageAdapter } from "@alexma01/typed-storage";
@@ -128,12 +92,12 @@ export function createLocalStorageAdapter(): SyncStorageAdapter {
 }
 ```
 
-You can implement other adapters for:
+You can build adapters for:
 
-- React Native MMKV
-- React Native `AsyncStorage` (after wrapping it into a sync-like interface via caching, if you need)
-- an in-memory `Map` for tests
-- etc.
+- `localStorage` (web)
+- MMKV (React Native)
+- in-memory storage (for tests)
+- any other sync key–value store
 
 ---
 
@@ -149,13 +113,13 @@ const adapter = createLocalStorageAdapter();
 export const appStorage = createSyncTypedStorage({
   adapter,
   schema: appStorageSchema,
-  namespace: "app", // optional, used as a prefix for physical keys
+  namespace: "app", // optional prefix for physical keys
 });
 ```
 
 ---
 
-### 4. Use it in your app (with full type safety)
+### 4. Use it in your app
 
 ```ts
 import { appStorage } from "./storage";
@@ -166,82 +130,33 @@ appStorage.set("count", 42);
 appStorage.set("userData", { name: "Alex", age: 30 });
 appStorage.set("isAuthenticated", true);
 
-// Read
+// Read (fully typed)
 const token = appStorage.get("userToken");         // string
 const count = appStorage.get("count");            // number
 const userData = appStorage.get("userData");      // { name: string; age: number }
 const isAuth = appStorage.get("isAuthenticated"); // boolean
 
-// Keys (typed)
+// List keys (typed union)
 const keys = appStorage.keys();
 // type: ("userToken" | "count" | "userData" | "isAuthenticated")[]
 ```
 
-If you pass a key that doesn't exist in the schema, TypeScript will complain:
+TypeScript will prevent invalid keys or wrong types:
 
 ```ts
-// appStorage.set("unknownKey", "foo"); // ❌ Property '"unknownKey"' does not exist ...
+// appStorage.set("unknownKey", "foo");      // ❌ compile error (unknown key)
+// appStorage.set("count", "not a number");  // ❌ compile error (wrong type)
 ```
 
-At runtime, `createSyncTypedStorage` also throws if you try to use an unknown key:
-
-```ts
-throw new Error(`Unknown storage key: ${String(key)}`);
-```
+At runtime, unknown keys also throw an error.
 
 ---
 
-## API Reference
+## Public API
 
-### `createSyncTypedStorage`
+### `defineStorageSchema(schema)`
 
-```ts
-import type {
-  StorageSchema,
-  SyncStorageAdapter,
-  TypedStorage,
-  ValueOfSchema,
-} from "@alexma01/typed-storage";
-
-function createSyncTypedStorage<S extends StorageSchema>(params: {
-  adapter: SyncStorageAdapter;
-  schema: S;
-  namespace?: string;
-}): TypedStorage<S>;
-```
-
-**Parameters:**
-
-- `adapter`: your implementation of `SyncStorageAdapter`.
-- `schema`: a `StorageSchema` created via `defineStorageSchema(...)`.
-- `namespace` (optional): string prefix used to namespace keys at the storage level.
-
-**Returns:** a `TypedStorage<S>` object with methods:
-
-- `get(key)`
-- `set(key, value)`
-- `remove(key)`
-- `keys()`
-- `clearAll()`
-
----
-
-### `defineStorageSchema`
-
-```ts
-import type { StorageField, StorageSchema } from "@alexma01/typed-storage";
-
-function defineStorageSchema<
-  const S extends Record<string, StorageField<any>>
->(schema: S): S & StorageSchema;
-```
-
-Helper to define a schema with:
-
-- literal keys preserved
-- validation against `StorageSchema`
-
-You typically use it like this:
+Defines a typed schema for your storage.
 
 ```ts
 import {
@@ -251,27 +166,21 @@ import {
   booleanCodec,
 } from "@alexma01/typed-storage";
 
-export const schema = defineStorageSchema({
+const schema = defineStorageSchema({
   userToken: field(stringCodec),
   isAuthenticated: field(booleanCodec),
 });
 
-export type Schema = typeof schema;
+type Schema = typeof schema;
 ```
+
+Use this to get typed keys and values across your app.
 
 ---
 
-### `field<T>(codec, default?)`
+### `field(codec, default?)`
 
-```ts
-import type { Codec, StorageField } from "@alexma01/typed-storage";
-
-function field<T>(codec: Codec<T>, defaultValue?: T): StorageField<T>;
-```
-
-Creates a `StorageField<T>` from a codec and an optional default value.
-
-Example:
+Creates a field in your schema from a codec and an optional default value.
 
 ```ts
 import { field, stringCodec, numberCodec } from "@alexma01/typed-storage";
@@ -284,117 +193,82 @@ const schema = defineStorageSchema({
 
 ---
 
-### `Codec<T>`
+### Built-in codecs
 
 ```ts
-export interface Codec<T> {
-  encode(value: T): string;
-  decode(raw: string | null): T | null;
-}
+import {
+  stringCodec,
+  booleanCodec,
+  numberCodec,
+  jsonCodec,
+} from "@alexma01/typed-storage";
 ```
 
-Built-in codecs:
+- `stringCodec` – for strings
+- `booleanCodec` – for booleans
+- `numberCodec` – for numbers
+- `jsonCodec<T>()` – for arbitrary JSON-serializable types
+
+Example:
 
 ```ts
-export const stringCodec: Codec<string>;
-export const booleanCodec: Codec<boolean>;
-export const numberCodec: Codec<number>;
-export const jsonCodec = <T>(): Codec<T>;
+const schema = defineStorageSchema({
+  userPreferences: field(
+    jsonCodec<{ theme: "light" | "dark"; notifications: boolean }>(),
+  ),
+});
 ```
 
-- `stringCodec` – stores strings as-is.
-- `booleanCodec` – stores booleans as `"1"` / `"0"`.
-- `numberCodec` – stores numbers using `String(value)`.
-- `jsonCodec<T>()` – serializes arbitrary types via `JSON.stringify` / `JSON.parse`.
+---
 
-You can also create your own custom codecs, e.g. for dates:
+### `createSyncTypedStorage({ adapter, schema, namespace? })`
+
+Creates the main storage client.
 
 ```ts
-export const dateCodec: Codec<Date> = {
-  encode: d => d.toISOString(),
-  decode: raw => (raw == null ? null : new Date(raw)),
+import { createSyncTypedStorage } from "@alexma01/typed-storage";
+
+const storage = createSyncTypedStorage({
+  adapter,       // your SyncStorageAdapter
+  schema,        // created via defineStorageSchema
+  namespace: "app", // optional
+});
+```
+
+The returned object has:
+
+```ts
+storage.get(key);
+storage.set(key, value);
+storage.remove(key);
+storage.keys();
+storage.clearAll();
+```
+
+All fully typed from the `schema`.
+
+---
+
+### `SyncStorageAdapter` (type)
+
+If you want to build your own adapter:
+
+```ts
+import type { SyncStorageAdapter } from "@alexma01/typed-storage";
+
+const myAdapter: SyncStorageAdapter = {
+  getItem(key) { /* ... */ },
+  setItem(key, value) { /* ... */ },
+  deleteItem(key) { /* ... */ },
+  getAllKeys() { /* ... */ },
 };
 ```
 
 ---
 
-### `StorageField<T>`
+## Testing example (in-memory adapter)
 
-```ts
-interface StorageField<T> {
-  codec: Codec<T>;
-  default?: T; // optional default, for your own helpers / wrappers
-}
-```
-
-You usually don’t construct this directly; you use `field(...)` instead.
-
----
-
-### `StorageSchema`
-
-```ts
-type StorageSchema = Record<string, StorageField<unknown>>;
-```
-
-Schemas are created via `defineStorageSchema(...)`.
-
----
-
-### `ValueOfSchema<S, K>`
-
-Utility type to map schema keys to their logical value types:
-
-```ts
-type ValueOfSchema<
-  S extends StorageSchema,
-  K extends keyof S,
-> = S[K] extends StorageField<infer T> ? T : never;
-```
-
-Example:
-
-```ts
-type TokenType = ValueOfSchema<typeof appStorageSchema, "userToken">;         // string
-type IsAuthenticatedType = ValueOfSchema<typeof appStorageSchema, "isAuthenticated">; // boolean
-```
-
----
-
-### `SyncStorageAdapter`
-
-```ts
-interface SyncStorageAdapter {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  deleteItem(key: string): void;
-  getAllKeys(): string[];
-}
-```
-
-Implement this for your storage backend (localStorage, MMKV, in-memory, etc.).
-
----
-
-### `TypedStorage<S>`
-
-```ts
-interface TypedStorage<S extends StorageSchema> {
-  get<K extends keyof S>(key: K): ValueOfSchema<S, K>;
-  set<K extends keyof S>(key: K, value: ValueOfSchema<S, K>): void;
-  remove<K extends keyof S>(key: K): void;
-  keys(): (keyof S)[];
-  clearAll(): void;
-}
-```
-
-All methods are fully type-safe based on the schema you pass to `createSyncTypedStorage`.
-
----
-
-## Testing with an in-memory adapter
-
-For unit tests you can use a simple in-memory adapter:
+Handy for unit tests:
 
 ```ts
 import type { SyncStorageAdapter } from "@alexma01/typed-storage";
@@ -419,7 +293,7 @@ export function createInMemoryAdapter(): SyncStorageAdapter {
 }
 ```
 
-Then:
+Usage in tests:
 
 ```ts
 import { createSyncTypedStorage } from "@alexma01/typed-storage";

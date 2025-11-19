@@ -9,5 +9,5 @@ export default {
     ...tsJestTransformCfg,
   },
   setupFiles: ['<rootDir>/browserMocks.js'],
-  rootDir: 'src/tests',
+  rootDir: 'tests',
 }

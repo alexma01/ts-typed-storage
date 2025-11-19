@@ -1,6 +1,6 @@
-import { booleanCodec, jsonCodec, numberCodec, stringCodec } from '../core/codecs'
-import { createSyncTypedStorage } from '../core/syncTypedStorage'
-import { defineStorageSchema, field, type SyncStorageAdapter } from '../core/types'
+import { booleanCodec, jsonCodec, numberCodec, stringCodec } from '../src/core/codecs'
+import { createSyncTypedStorage } from '../src/core/syncTypedStorage'
+import { defineStorageSchema, field, type SyncStorageAdapter } from '../src/core/types'
 
 const appStorageSchema = defineStorageSchema({
   userToken: field(stringCodec),

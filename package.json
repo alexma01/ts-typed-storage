@@ -1,6 +1,6 @@
 {
   "name": "@alema/typed-storage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "typescript",
     "storage",
@@ -29,6 +29,10 @@
   },
   "author": "Alessandro Marra <alessandromarra001@gmail.com>",
   "description": "A TypeScript library for typed key-value storage with support for various codecs and storage adapters.",
+  "repository": {
+    "url": "https://github.com/alexma01/ts-typed-storage",
+    "type": "git"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@stylistic/eslint-plugin": "^5.6.0",

@@ -1,4 +1,3 @@
-
 name: CI
 
 on:
@@ -16,14 +15,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: yarn
 
+      - name: Debug Yarn version
+        run: |
+          which yarn
+          yarn --version
+
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run ESLint
         run: yarn lint

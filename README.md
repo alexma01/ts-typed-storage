@@ -6,6 +6,7 @@ Type-safe key–value storage on top of any **synchronous** storage engine
 - ✅ Strongly typed keys (editor autocomplete)
 - ✅ Strongly typed values per key
 - ✅ Simple API for defining schemas and using storage
+- ✅ Optional listeners for reacting to storage changes
 - ✅ Works with any sync storage backend via a tiny adapter
 
 ---
@@ -60,7 +61,9 @@ export type AppStorageSchema = typeof appStorageSchema;
 
 ### 2. Implement a storage adapter (example: `localStorage`)
 
-You just need to match the `SyncStorageAdapter` shape:
+You just need to match the `SyncStorageAdapter` shape.
+
+#### Basic adapter (without listeners)
 
 ```ts
 import type { SyncStorageAdapter } from "@alema/typed-storage";
@@ -101,7 +104,74 @@ You can build adapters for:
 
 ---
 
-### 3. Create the typed storage instance
+### 3. Optional: adapter with listeners
+
+If your adapter implements `addListener` / `removeListener`,  
+the typed storage will expose them as `storage.addListener` / `storage.removeListener`.
+
+Example `localStorage` adapter with in-memory listeners:
+
+```ts
+import type { SyncStorageAdapter } from "@alema/typed-storage";
+
+export function createLocalStorageAdapterWithListeners(): SyncStorageAdapter {
+  const listeners = new Map<string, Set<(newValue: string | null) => void>>();
+
+  const notify = (key: string, newValue: string | null) => {
+    const cbs = listeners.get(key);
+    if (!cbs) return;
+    for (const cb of cbs) {
+      cb(newValue);
+    }
+  };
+
+  return {
+    getItem(key) {
+      if (typeof localStorage === "undefined") return null;
+      return localStorage.getItem(key);
+    },
+    setItem(key, value) {
+      if (typeof localStorage === "undefined") return;
+      localStorage.setItem(key, value);
+      notify(key, value);
+    },
+    deleteItem(key) {
+      if (typeof localStorage === "undefined") return;
+      localStorage.removeItem(key);
+      notify(key, null);
+    },
+    getAllKeys() {
+      if (typeof localStorage === "undefined") return [];
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k != null) keys.push(k);
+      }
+      return keys;
+    },
+    addListener(key, callback) {
+      let set = listeners.get(key);
+      if (!set) {
+        set = new Set();
+        listeners.set(key, set);
+      }
+      set.add(callback);
+    },
+    removeListener(key, callback) {
+      const set = listeners.get(key);
+      if (!set) return;
+      set.delete(callback);
+      if (set.size === 0) {
+        listeners.delete(key);
+      }
+    },
+  };
+}
+```
+
+---
+
+### 4. Create the typed storage instance
 
 ```ts
 import { createSyncTypedStorage } from "@alema/typed-storage";
@@ -117,9 +187,18 @@ export const appStorage = createSyncTypedStorage({
 });
 ```
 
+Se vuoi usare i listener:
+
+```ts
+import { createLocalStorageAdapterWithListeners } from "./localStorageAdapterWithListeners";
+
+const adapter = createLocalStorageAdapterWithListeners();
+// poi come sopra
+```
+
 ---
 
-### 4. Use it in your app
+### 5. Use it in your app
 
 ```ts
 import { appStorage } from "./storage";
@@ -132,9 +211,9 @@ appStorage.set("isAuthenticated", true);
 
 // Read (fully typed)
 const token = appStorage.get("userToken");         // string
-const count = appStorage.get("count");            // number
-const userData = appStorage.get("userData");      // { name: string; age: number }
-const isAuth = appStorage.get("isAuthenticated"); // boolean
+const count = appStorage.get("count");             // number
+const userData = appStorage.get("userData");       // { name: string; age: number }
+const isAuth = appStorage.get("isAuthenticated");  // boolean
 
 // List keys (typed union)
 const keys = appStorage.keys();
@@ -149,6 +228,32 @@ TypeScript will prevent invalid keys or wrong types:
 ```
 
 At runtime, unknown keys also throw an error.
+
+---
+
+### 6. Listen to storage changes (optional)
+
+If your adapter implements listeners, you can react to changes on a specific key:
+
+```ts
+// Value type is inferred from the schema
+const callback = (newValue: string | null) => {
+  console.log("userToken changed:", newValue);
+};
+
+appStorage.addListener?.("userToken", callback);
+
+appStorage.set("userToken", "new-token");
+// callback called with "new-token"
+
+appStorage.removeListener?.("userToken", callback);
+
+appStorage.set("userToken", "another-token");
+// callback is NOT called anymore
+```
+
+> `addListener` and `removeListener` are optional (`?.`),  
+> because not all adapters must implement them.
 
 ---
 
@@ -178,16 +283,16 @@ Use this to get typed keys and values across your app.
 
 ---
 
-### `field(codec, default?)`
+### `field(codec)`
 
-Creates a field in your schema from a codec and an optional default value.
+Creates a field in your schema from a codec.
 
 ```ts
 import { field, stringCodec, numberCodec } from "@alema/typed-storage";
 
 const schema = defineStorageSchema({
   userToken: field(stringCodec),
-  count: field(numberCodec, 0),
+  count: field(numberCodec),
 });
 ```
 
@@ -243,6 +348,8 @@ storage.set(key, value);
 storage.remove(key);
 storage.keys();
 storage.clearAll();
+storage.addListener?(key, callback);
+storage.removeListener?(key, callback);
 ```
 
 All fully typed from the `schema`.
@@ -261,8 +368,15 @@ const myAdapter: SyncStorageAdapter = {
   setItem(key, value) { /* ... */ },
   deleteItem(key) { /* ... */ },
   getAllKeys() { /* ... */ },
+
+  // optional:
+  addListener?(key, callback) { /* ... */ },
+  removeListener?(key, callback) { /* ... */ },
 };
 ```
+
+- `addListener` / `removeListener` are **optional**.
+- If implemented, the typed storage layer will expose `storage.addListener` / `storage.removeListener`.
 
 ---
 

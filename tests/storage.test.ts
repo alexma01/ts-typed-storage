@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { booleanCodec, jsonCodec, numberCodec, stringCodec } from '../src/core/codecs'
 import { createSyncTypedStorage } from '../src/core/syncTypedStorage'
 import { defineStorageSchema, field, type SyncStorageAdapter } from '../src/core/types'
@@ -12,18 +16,51 @@ const appStorageSchema = defineStorageSchema({
 })
 
 function localStorageAdapter(): SyncStorageAdapter {
+  const listeners = new Map<string, Set<(newValue: string | null) => void>>()
+
+  const notify = (key: string, newValue: string | null) => {
+    const cbs = listeners.get(key)
+    if (!cbs) return
+    for (const cb of cbs) {
+      cb(newValue)
+    }
+  }
+
   return {
-    getItem: function (key: string): string | null {
+    getItem(key: string): string | null {
       return localStorage.getItem(key)
     },
-    setItem: function (key: string, value: string): void {
+
+    setItem(key: string, value: string): void {
       localStorage.setItem(key, value)
+      notify(key, value)
     },
-    deleteItem: function (key: string): void {
+
+    deleteItem(key: string): void {
       localStorage.removeItem(key)
+      notify(key, null)
     },
-    getAllKeys: function (): string[] {
+
+    getAllKeys(): string[] {
       return Object.keys(localStorage)
+    },
+
+    addListener(key: string, callback: (newValue: string | null) => void): void {
+      let set = listeners.get(key)
+      if (!set) {
+        set = new Set()
+        listeners.set(key, set)
+      }
+      set.add(callback)
+    },
+
+    removeListener(key: string, callback: (newValue: string | null) => void): void {
+      const set = listeners.get(key)
+      if (!set) return
+      set.delete(callback)
+      if (set.size === 0) {
+        listeners.delete(key)
+      }
     },
   }
 }
@@ -85,5 +122,22 @@ describe('test storage', () => {
     stor.set('testArray', arrayData)
     const storedArray = stor.get('testArray')
     expect(storedArray).toEqual(arrayData)
+  })
+  test('add and remove listener', () => {
+    const callback = jest.fn((newValue) => {
+      return newValue
+    })
+    stor.addListener?.('userToken', callback)
+
+    stor.set('userToken', 'new-token')
+    expect(callback).toHaveBeenCalledWith('new-token')
+
+    stor.set('userToken', 'updated-token')
+    expect(callback).toHaveBeenCalledWith('updated-token')
+
+    stor.removeListener?.('userToken', callback)
+
+    stor.set('userToken', 'another-token')
+    expect(callback).toHaveBeenCalledTimes(2) // should not be called again
   })
 })

@@ -8,6 +8,6 @@ export default {
   transform: {
     ...tsJestTransformCfg,
   },
-  setupFiles: ['<rootDir>/browserMocks.js'],
+  // setupFiles: ['<rootDir>/browserMocks.js'],
   rootDir: 'tests',
 }

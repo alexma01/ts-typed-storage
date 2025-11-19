@@ -28,14 +28,18 @@ interface SyncStorageAdapter {
   setItem(key: string, value: string): void
   deleteItem(key: string): void
   getAllKeys(): string[]
+  addListener?(key: string, callback: (newValue: string | null) => void): void
+  removeListener?(key: string, callback: (newValue: string | null) => void): void
 }
 
 interface TypedStorage<S extends StorageSchema> {
-  get<K extends keyof S>(key: K): ValueOfSchema<S, K>
-  set<K extends keyof S>(key: K, value: ValueOfSchema<S, K>): void
-  remove<K extends keyof S>(key: K): void
+  get(key: keyof S): ValueOfSchema<S, keyof S> | null
+  set(key: keyof S, value: ValueOfSchema<S, keyof S>): void
+  remove(key: keyof S): void
   keys(): (keyof S)[]
   clearAll(): void
+  addListener?(key: keyof S, callback: (newValue: ValueOfSchema<S, keyof S> | null) => void): void
+  removeListener?(key: keyof S, callback: (newValue: ValueOfSchema<S, keyof S> | null) => void): void
 }
 
 export { type StorageSchema, type ValueOfSchema, type StorageField, type SyncStorageAdapter, type TypedStorage, defineStorageSchema, field }

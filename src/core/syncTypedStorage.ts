@@ -61,4 +61,4 @@ function createSyncTypedStorage<S extends StorageSchema>(params: {
   }
 }
 
-export { createSyncTypedStorage, SyncStorageAdapter, TypedStorage }
+export { createSyncTypedStorage }

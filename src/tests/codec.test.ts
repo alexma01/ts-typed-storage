@@ -1,4 +1,4 @@
-import { stringCodec, booleanCodec, numberCodec, jsonCodec } from '../codecs'
+import { stringCodec, booleanCodec, numberCodec, jsonCodec } from '../core/codecs'
 
 describe('codecs test', () => {
   test('string codec', () => {

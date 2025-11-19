@@ -1,10 +1,13 @@
 {
   "name": "storage",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
   "license": "MIT",
   "scripts": {
-    "prepare": "if [ \"$CI\" != \"true\" ]; then lefthook install; fi",
+    "prepare": "node scripts/prepare.cjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint . --fix",

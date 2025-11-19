@@ -1,6 +1,6 @@
 {
-  "name": "@alexma01/typed-storage",
-  "version": "1.0.1",
+  "name": "@alema/typed-storage",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

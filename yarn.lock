@@ -5,9 +5,9 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@alexma01/typed-storage@workspace:.":
+"@alema/typed-storage@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@alexma01/typed-storage@workspace:."
+  resolution: "@alema/typed-storage@workspace:."
   dependencies:
     "@eslint/js": "npm:^9.39.1"
     "@stylistic/eslint-plugin": "npm:^5.6.0"

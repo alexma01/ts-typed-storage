@@ -37,3 +37,6 @@ jobs:
 
       - name: Run TypeScript typecheck
         run: yarn typecheck
+
+      - name: Run Jest tests
+        run: yarn test

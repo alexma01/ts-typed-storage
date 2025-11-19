@@ -21,9 +21,12 @@ jobs:
         with:
           node-version: 20
           cache: yarn
-
+      
+      - name: Enable Corepack
+        run: corepack enable
+      
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run ESLint
         run: yarn lint

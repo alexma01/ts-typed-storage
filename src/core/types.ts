@@ -2,7 +2,6 @@ import { Codec } from './codecs'
 
 interface StorageField<T> {
   codec: Codec<T>
-  default?: T | undefined
 };
 
 type StorageSchema = Record<string, StorageField<unknown>>
@@ -18,10 +17,9 @@ type ValueOfSchema<
   K extends keyof S,
 > = S[K] extends StorageField<infer T> ? T : never
 
-function field<T>(codec: Codec<T>, defaultValue?: T): StorageField<T> {
+function field<T>(codec: Codec<T>): StorageField<T> {
   return {
     codec,
-    default: defaultValue,
   }
 }
 

@@ -6,6 +6,8 @@ const appStorageSchema = defineStorageSchema({
   userToken: field(stringCodec),
   count: field(numberCodec),
   userData: field(jsonCodec<{ name: string, age: number }>()),
+  testNestedObject: field(jsonCodec<{ a: number, b: { c: string, d: boolean } }>()),
+  testArray: field(jsonCodec<{ id: number, value: string }[]>()),
   isAuthenticated: field(booleanCodec),
 })
 
@@ -68,5 +70,20 @@ describe('test storage', () => {
     const count = stor.get('count')
     expect(token).toBeNull()
     expect(count).toBeNull()
+  })
+  test('set and get nested json item', () => {
+    const nestedObject = { a: 1, b: { c: 'test', d: true } }
+    stor.set('testNestedObject', nestedObject)
+    const storedObject = stor.get('testNestedObject')
+    expect(storedObject).toEqual(nestedObject)
+  })
+  test('set and get array json item', () => {
+    const arrayData = [
+      { id: 1, value: 'first' },
+      { id: 2, value: 'second' },
+    ]
+    stor.set('testArray', arrayData)
+    const storedArray = stor.get('testArray')
+    expect(storedArray).toEqual(arrayData)
   })
 })

@@ -1,4 +1,4 @@
-# @alexma01/typed-storage
+# @alema/typed-storage
 
 Type-safe key–value storage on top of any **synchronous** storage engine  
 (e.g. `localStorage`, MMKV, in-memory maps), powered by **TypeScript + codecs**.
@@ -14,13 +14,13 @@ Type-safe key–value storage on top of any **synchronous** storage engine
 
 ```bash
 # npm
-npm install @alexma01/typed-storage
+npm install @alema/typed-storage
 
 # yarn
-yarn add @alexma01/typed-storage
+yarn add @alema/typed-storage
 
 # pnpm
-pnpm add @alexma01/typed-storage
+pnpm add @alema/typed-storage
 ```
 
 Requires **TypeScript 5+**.
@@ -41,7 +41,7 @@ import {
   numberCodec,
   booleanCodec,
   jsonCodec,
-} from "@alexma01/typed-storage";
+} from "@alema/typed-storage";
 
 export const appStorageSchema = defineStorageSchema({
   userToken: field(stringCodec),
@@ -63,7 +63,7 @@ export type AppStorageSchema = typeof appStorageSchema;
 You just need to match the `SyncStorageAdapter` shape:
 
 ```ts
-import type { SyncStorageAdapter } from "@alexma01/typed-storage";
+import type { SyncStorageAdapter } from "@alema/typed-storage";
 
 export function createLocalStorageAdapter(): SyncStorageAdapter {
   return {
@@ -104,7 +104,7 @@ You can build adapters for:
 ### 3. Create the typed storage instance
 
 ```ts
-import { createSyncTypedStorage } from "@alexma01/typed-storage";
+import { createSyncTypedStorage } from "@alema/typed-storage";
 import { appStorageSchema } from "./schema";
 import { createLocalStorageAdapter } from "./localStorageAdapter";
 
@@ -164,7 +164,7 @@ import {
   field,
   stringCodec,
   booleanCodec,
-} from "@alexma01/typed-storage";
+} from "@alema/typed-storage";
 
 const schema = defineStorageSchema({
   userToken: field(stringCodec),
@@ -183,7 +183,7 @@ Use this to get typed keys and values across your app.
 Creates a field in your schema from a codec and an optional default value.
 
 ```ts
-import { field, stringCodec, numberCodec } from "@alexma01/typed-storage";
+import { field, stringCodec, numberCodec } from "@alema/typed-storage";
 
 const schema = defineStorageSchema({
   userToken: field(stringCodec),
@@ -201,7 +201,7 @@ import {
   booleanCodec,
   numberCodec,
   jsonCodec,
-} from "@alexma01/typed-storage";
+} from "@alema/typed-storage";
 ```
 
 - `stringCodec` – for strings
@@ -226,7 +226,7 @@ const schema = defineStorageSchema({
 Creates the main storage client.
 
 ```ts
-import { createSyncTypedStorage } from "@alexma01/typed-storage";
+import { createSyncTypedStorage } from "@alema/typed-storage";
 
 const storage = createSyncTypedStorage({
   adapter,       // your SyncStorageAdapter
@@ -254,7 +254,7 @@ All fully typed from the `schema`.
 If you want to build your own adapter:
 
 ```ts
-import type { SyncStorageAdapter } from "@alexma01/typed-storage";
+import type { SyncStorageAdapter } from "@alema/typed-storage";
 
 const myAdapter: SyncStorageAdapter = {
   getItem(key) { /* ... */ },
@@ -271,7 +271,7 @@ const myAdapter: SyncStorageAdapter = {
 Handy for unit tests:
 
 ```ts
-import type { SyncStorageAdapter } from "@alexma01/typed-storage";
+import type { SyncStorageAdapter } from "@alema/typed-storage";
 
 export function createInMemoryAdapter(): SyncStorageAdapter {
   const store = new Map<string, string>();
@@ -296,7 +296,7 @@ export function createInMemoryAdapter(): SyncStorageAdapter {
 Usage in tests:
 
 ```ts
-import { createSyncTypedStorage } from "@alexma01/typed-storage";
+import { createSyncTypedStorage } from "@alema/typed-storage";
 import { createInMemoryAdapter } from "./inMemoryAdapter";
 import { appStorageSchema } from "./schema";
 

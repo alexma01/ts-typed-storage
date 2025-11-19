@@ -20,5 +20,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "exclude": ["dist"]
+  "exclude": ["dist", "node_modules", "tests"]
 }

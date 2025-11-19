@@ -1,0 +1,10 @@
+pre-push:
+  parallel: false
+  piped: true
+  commands:
+    lint-check:
+      priority: 1
+      run: yarn lint
+    test-app:
+      priority: 2
+      run: yarn test

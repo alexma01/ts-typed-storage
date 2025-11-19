@@ -1,6 +1,17 @@
 {
   "name": "@alema/typed-storage",
   "version": "1.0.0",
+  "keywords": [
+    "typescript",
+    "storage",
+    "typed",
+    "localstorage",
+    "mmkv",
+    "react-native",
+    "key-value",
+    "schema",
+    "codec"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +27,6 @@
     "test": "jest",
     "build": "tsc"
   },
-  "keywords": [],
   "author": "",
   "description": "",
   "devDependencies": {

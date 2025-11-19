@@ -5,6 +5,25 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@alexma01/typed-storage@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@alexma01/typed-storage@workspace:."
+  dependencies:
+    "@eslint/js": "npm:^9.39.1"
+    "@stylistic/eslint-plugin": "npm:^5.6.0"
+    "@types/jest": "npm:^30.0.0"
+    "@types/node": "npm:^24.10.1"
+    eslint: "npm:^9.39.1"
+    eslint-config-prettier: "npm:^10.1.8"
+    jest: "npm:^30.2.0"
+    lefthook: "npm:^2.0.4"
+    ts-jest: "npm:^29.4.5"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.9.3"
+    typescript-eslint: "npm:^8.47.0"
+  languageName: unknown
+  linkType: soft
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.27.1":
   version: 7.27.1
   resolution: "@babel/code-frame@npm:7.27.1"
@@ -4230,25 +4249,6 @@ __metadata:
   checksum: 10c0/651c9f87667e077584bbe848acaecc6049bc71979f1e9a46c7b920cad4431c388df0f51b8ad7cfd6eed3db97a2878d0fc8b3122979439ea8bac29c61c95eec8a
   languageName: node
   linkType: hard
-
-"storage@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "storage@workspace:."
-  dependencies:
-    "@eslint/js": "npm:^9.39.1"
-    "@stylistic/eslint-plugin": "npm:^5.6.0"
-    "@types/jest": "npm:^30.0.0"
-    "@types/node": "npm:^24.10.1"
-    eslint: "npm:^9.39.1"
-    eslint-config-prettier: "npm:^10.1.8"
-    jest: "npm:^30.2.0"
-    lefthook: "npm:^2.0.4"
-    ts-jest: "npm:^29.4.5"
-    ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.9.3"
-    typescript-eslint: "npm:^8.47.0"
-  languageName: unknown
-  linkType: soft
 
 "string-length@npm:^4.0.2":
   version: 4.0.2

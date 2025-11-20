@@ -106,8 +106,8 @@ You can build adapters for:
 
 ### 3. Optional: adapter with listeners
 
-If your adapter implements `addListener` / `removeListener`,  
-the typed storage will expose them as `storage.addListener` / `storage.removeListener`.
+If your adapter implements `addListener`,  
+the typed storage will expose it as `storage.addListener`, which returns an unsubscribe function.
 
 Example `localStorage` adapter with in-memory listeners:
 
@@ -156,14 +156,16 @@ export function createLocalStorageAdapterWithListeners(): SyncStorageAdapter {
         listeners.set(key, set);
       }
       set.add(callback);
-    },
-    removeListener(key, callback) {
-      const set = listeners.get(key);
-      if (!set) return;
-      set.delete(callback);
-      if (set.size === 0) {
-        listeners.delete(key);
-      }
+
+      // unsubscribe function
+      return () => {
+        const current = listeners.get(key);
+        if (!current) return;
+        current.delete(callback);
+        if (current.size === 0) {
+          listeners.delete(key);
+        }
+      };
     },
   };
 }
@@ -239,19 +241,19 @@ const callback = (newValue: string | null) => {
   console.log("userToken changed:", newValue);
 };
 
-appStorage.addListener?.("userToken", callback);
+const unsubscribe = appStorage.addListener("userToken", callback);
 
 appStorage.set("userToken", "new-token");
 // callback called with "new-token"
 
-appStorage.removeListener?.("userToken", callback);
+// Later, when you don't need updates anymore
+unsubscribe();
 
 appStorage.set("userToken", "another-token");
 // callback is NOT called anymore
 ```
 
-> `addListener` and `removeListener` are optional (`?.`),  
-> because not all adapters must implement them.
+> addListener is optional because not all adapters must implement it. If the adapter does not support listeners, addListener should return a no-op unsubscribe function.
 
 ---
 
@@ -346,8 +348,9 @@ storage.set(key, value);
 storage.remove(key);
 storage.keys();
 storage.clearAll();
-storage.addListener?(key, callback);
-storage.removeListener?(key, callback);
+const unsubscribe = storage.addListener?(key, callback);
+// later
+unsubscribe?.();
 ```
 
 All fully typed from the `schema`.
@@ -367,14 +370,18 @@ const myAdapter: SyncStorageAdapter = {
   deleteItem(key) { /* ... */ },
   getAllKeys() { /* ... */ },
 
-  // optional:
-  addListener?(key, callback) { /* ... */ },
-  removeListener?(key, callback) { /* ... */ },
+  // optional: return an unsubscribe function
+  addListener?(key, callback) {
+    /* ... */
+    return () => {
+      /* cleanup */
+    };
+  },
 };
 ```
 
-- `addListener` / `removeListener` are **optional**.
-- If implemented, the typed storage layer will expose `storage.addListener` / `storage.removeListener`.
+- `addListener` is **optional**.
+- If implemented, the typed storage layer will expose `storage.addListener`.
 
 ---
 

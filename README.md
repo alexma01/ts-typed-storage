@@ -187,13 +187,11 @@ export const appStorage = createSyncTypedStorage({
 });
 ```
 
-Se vuoi usare i listener:
 
 ```ts
 import { createLocalStorageAdapterWithListeners } from "./localStorageAdapterWithListeners";
 
 const adapter = createLocalStorageAdapterWithListeners();
-// poi come sopra
 ```
 
 ---

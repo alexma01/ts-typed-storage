@@ -44,22 +44,20 @@ function localStorageAdapter(): SyncStorageAdapter {
     getAllKeys(): string[] {
       return Object.keys(localStorage)
     },
-
-    addListener(key: string, callback: (newValue: string | null) => void): void {
+    addListener(key: string, callback: (newValue: string | null) => void): () => void {
       let set = listeners.get(key)
       if (!set) {
         set = new Set()
         listeners.set(key, set)
       }
       set.add(callback)
-    },
-
-    removeListener(key: string, callback: (newValue: string | null) => void): void {
-      const set = listeners.get(key)
-      if (!set) return
-      set.delete(callback)
-      if (set.size === 0) {
-        listeners.delete(key)
+      return () => {
+        const currentSet = listeners.get(key)
+        if (!currentSet) return
+        currentSet.delete(callback)
+        if (currentSet.size === 0) {
+          listeners.delete(key)
+        }
       }
     },
   }
@@ -127,7 +125,7 @@ describe('test storage', () => {
     const callback = jest.fn((newValue) => {
       return newValue
     })
-    stor.addListener?.('userToken', callback)
+    const unsubscribe = stor.addListener?.('userToken', callback)
 
     stor.set('userToken', 'new-token')
     expect(callback).toHaveBeenCalledWith('new-token')
@@ -135,9 +133,23 @@ describe('test storage', () => {
     stor.set('userToken', 'updated-token')
     expect(callback).toHaveBeenCalledWith('updated-token')
 
-    stor.removeListener?.('userToken', callback)
+    unsubscribe?.()
 
     stor.set('userToken', 'another-token')
     expect(callback).toHaveBeenCalledTimes(2) // should not be called again
+
+    const unsubscribeCount = stor.addListener('count', callback)
+
+    stor.set('count', 42)
+    const count = stor.get('count')
+    expect(count).toBe(42)
+    expect(callback).toHaveBeenCalledWith(42)
+
+    unsubscribeCount?.()
+
+    stor.set('count', 100)
+    const newCount = stor.get('count')
+    expect(newCount).toBe(100)
+    expect(callback).toHaveBeenCalledTimes(3) // should not be called again
   })
 })

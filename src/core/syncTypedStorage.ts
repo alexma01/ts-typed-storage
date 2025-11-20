@@ -11,13 +11,6 @@ function createSyncTypedStorage<S extends StorageSchema>(params: {
   const makeKey = (key: string) =>
     namespace ? `${namespace}-${key}` : key
 
-  // map: physicalKey -> (userCallback -> internalCallback)
-  type UserListener = (value: ValueOfSchema<S, Keys> | null) => void
-  const listenerMap = new Map<
-    string,
-    Map<UserListener, (raw: string | null) => void>
-  >()
-
   function get<K extends Keys>(key: K): ValueOfSchema<S, K> {
     const field = schema[key]
     if (!field) {
@@ -57,51 +50,19 @@ function createSyncTypedStorage<S extends StorageSchema>(params: {
   function addListener<K extends Keys>(
     key: K,
     cb: (value: ValueOfSchema<S, K> | null) => void,
-  ): void {
-    if (!adapter.addListener) return
-
-    const field = schema[key]
-    if (!field) {
-      throw new Error(`Unknown storage key: ${String(key)}`)
+  ): () => void {
+    if (!adapter.addListener) return () => {
+      console.warn('addListener not supported by adapter')
     }
-
-    const physicalKey = makeKey(String(key))
-
-    // internal callback that decodes the raw value and calls the user callback
-    const internal = (raw: string | null) => {
+    const unsubscribe = adapter.addListener(makeKey(String(key)), (raw: string | null) => {
+      const field = schema[key]
+      if (!field) {
+        throw new Error(`Unknown storage key: ${String(key)}`)
+      }
       const decoded = field.codec.decode(raw) as ValueOfSchema<S, K> | null
       cb(decoded)
-    }
-
-    let keyMap = listenerMap.get(physicalKey)
-    if (!keyMap) {
-      keyMap = new Map()
-      listenerMap.set(physicalKey, keyMap)
-    }
-
-    keyMap.set(cb, internal)
-    adapter.addListener(physicalKey, internal)
-  }
-
-  function removeListener<K extends Keys>(
-    key: K,
-    cb: (value: ValueOfSchema<S, K> | null) => void,
-  ): void {
-    if (!adapter.removeListener) return
-
-    const physicalKey = makeKey(String(key))
-    const keyMap = listenerMap.get(physicalKey)
-    if (!keyMap) return
-
-    const internal = keyMap.get(cb)
-    if (!internal) return
-
-    keyMap.delete(cb)
-    if (!keyMap.size) {
-      listenerMap.delete(physicalKey)
-    }
-
-    adapter.removeListener(physicalKey, internal)
+    })
+    return unsubscribe
   }
 
   return {
@@ -111,7 +72,6 @@ function createSyncTypedStorage<S extends StorageSchema>(params: {
     keys,
     clearAll,
     addListener,
-    removeListener,
   }
 }
 
